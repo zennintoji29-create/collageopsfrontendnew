@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on refresh
+  // Load user on refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("accessToken");
@@ -22,15 +22,12 @@ export const AuthProvider = ({ children }) => {
   // LOGIN
   const login = async (email, password) => {
     try {
-      const res = await axios.post("/auth/login", {
-        email,
-        password,
-      });
+      const res = await axios.post("/auth/login", { email, password });
 
-      // BACKEND RETURNS: { token, user }
-      const { token, user } = res.data;
+      // ✅ CORRECT RESPONSE DESTRUCTURING
+      const { user, accessToken } = res.data.data;
 
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
       setUser(user);
@@ -49,9 +46,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post("/auth/register", userData);
 
-      const { token, user } = res.data;
+      const { user, accessToken } = res.data.data;
 
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
       setUser(user);
@@ -65,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // LOGOUT (frontend-only, backend has no logout route)
+  // LOGOUT
   const logout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
