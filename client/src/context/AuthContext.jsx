@@ -1,13 +1,13 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import axios from "../api/axios";
 
-export const AuthContext = createContext();
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Restore session on refresh
+  // Restore auth on refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("accessToken");
@@ -19,23 +19,20 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // LOGIN
   const login = async (email, password) => {
-    setLoading(true);
     try {
       const res = await axios.post("/auth/login", { email, password });
 
+      // ✅ MATCHES BACKEND RESPONSE
       const { user, accessToken } = res.data.data;
 
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("accessToken", accessToken);
 
       setUser(user);
-      setLoading(false);
 
       return { success: true };
     } catch (error) {
-      setLoading(false);
       return {
         success: false,
         message:
@@ -44,7 +41,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // LOGOUT
   const logout = () => {
     localStorage.clear();
     setUser(null);
@@ -60,9 +56,15 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
       }}
     >
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+  return ctx;
+};
