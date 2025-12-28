@@ -1,14 +1,14 @@
 import axios from "axios";
 
-const axiosInstance = axios.create({
+const api = axios.create({
   baseURL: "https://collgeopsbacknew.onrender.com/api",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Attach token
-axiosInstance.interceptors.request.use(
+api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -19,8 +19,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle auth errors
-axiosInstance.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
@@ -31,4 +30,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default axiosInstance;
+export default api;
