@@ -1,6 +1,5 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-
-import axios from '../api/axios';
+import { createContext, useState, useEffect, useContext } from "react";
+import axios from "../api/axios";
 
 export const AuthContext = createContext();
 
@@ -8,77 +7,85 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user from localStorage on refresh
   useEffect(() => {
-    // Check if user is logged in on mount
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('accessToken');
-    
+    const storedUser = localStorage.getItem("user");
+    const token = localStorage.getItem("accessToken");
+
     if (storedUser && token) {
       setUser(JSON.parse(storedUser));
     }
+
     setLoading(false);
   }, []);
 
+  // LOGIN
   const login = async (email, password) => {
     try {
-      const response = await axios.post('/auth/login', { email, password });
-      const { user: userData, accessToken, refreshToken } = response.data.data;
-      
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      
-      setUser(userData);
+      const res = await axios.post("/auth/login", {
+        email,
+        password,
+      });
+
+      // BACKEND RETURNS: { token, user }
+      const { token, user } = res.data;
+
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed',
+        message:
+          error.response?.data?.message || "Invalid email or password",
       };
     }
   };
 
+  // REGISTER
   const register = async (userData) => {
     try {
-      const response = await axios.post('/auth/register', userData);
-      const { user: newUser, accessToken, refreshToken } = response.data.data;
-      
-      localStorage.setItem('user', JSON.stringify(newUser));
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      
-      setUser(newUser);
+      const res = await axios.post("/auth/register", userData);
+
+      const { token, user } = res.data;
+
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      setUser(user);
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Registration failed',
+        message:
+          error.response?.data?.message || "Registration failed",
       };
     }
   };
 
-  const logout = async () => {
-    try {
-      await axios.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('user');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      setUser(null);
-    }
+  // LOGOUT (frontend-only, backend has no logout route)
+  const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    setUser(null);
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!user,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+      }}
+    >
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
 
+export const useAuth = () => useContext(AuthContext);
