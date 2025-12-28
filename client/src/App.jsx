@@ -1,43 +1,41 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './hooks/useAuth';
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Students from './pages/Students';
-import Courses from './pages/Courses';
-import Attendance from './pages/Attendance';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./hooks/useAuth";
 
-// Layout component for authenticated pages
-const Layout = ({ children }) => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-8">
-          {children}
-        </main>
-      </div>
+import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+import Courses from "./pages/Courses";
+import Attendance from "./pages/Attendance";
+
+// Layout for logged-in users
+const Layout = ({ children }) => (
+  <div className="min-h-screen bg-gray-50">
+    <Navbar />
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 p-8">{children}</main>
     </div>
-  );
-};
+  </div>
+);
 
-// Routes component
-const AppRoutes = () => {
+export default function App() {
   const { isAuthenticated } = useAuth();
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Public */}
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        }
       />
 
-      {/* Protected routes */}
+      {/* Protected */}
       <Route
         path="/dashboard"
         element={
@@ -52,7 +50,7 @@ const AppRoutes = () => {
       <Route
         path="/students"
         element={
-          <ProtectedRoute allowedRoles={['ADMIN', 'TEACHER']}>
+          <ProtectedRoute allowedRoles={["ADMIN", "TEACHER"]}>
             <Layout>
               <Students />
             </Layout>
@@ -82,39 +80,21 @@ const AppRoutes = () => {
         }
       />
 
-      {/* Redirect root to dashboard or login */}
+      {/* Root */}
       <Route
         path="/"
-        element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />}
+        element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />}
       />
 
-      {/* 404 - Not Found */}
+      {/* 404 */}
       <Route
         path="*"
         element={
           <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
-              <p className="text-xl text-gray-600 mb-8">Page not found</p>
-              <a href="/" className="btn-primary">
-                Go to Home
-              </a>
-            </div>
+            <h1 className="text-4xl font-bold">404 | Page Not Found</h1>
           </div>
         }
       />
     </Routes>
   );
-};
-
-function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </Router>
-  );
 }
-
-export default App;
