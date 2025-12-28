@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user on refresh
+  // Restore session on refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("accessToken");
@@ -21,18 +21,21 @@ export const AuthProvider = ({ children }) => {
 
   // LOGIN
   const login = async (email, password) => {
+    setLoading(true);
     try {
       const res = await axios.post("/auth/login", { email, password });
 
-      // ✅ CORRECT RESPONSE DESTRUCTURING
       const { user, accessToken } = res.data.data;
 
-      localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("accessToken", accessToken);
 
       setUser(user);
+      setLoading(false);
+
       return { success: true };
     } catch (error) {
+      setLoading(false);
       return {
         success: false,
         message:
@@ -41,31 +44,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // REGISTER
-  const register = async (userData) => {
-    try {
-      const res = await axios.post("/auth/register", userData);
-
-      const { user, accessToken } = res.data.data;
-
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      setUser(user);
-      return { success: true };
-    } catch (error) {
-      return {
-        success: false,
-        message:
-          error.response?.data?.message || "Registration failed",
-      };
-    }
-  };
-
   // LOGOUT
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+    localStorage.clear();
     setUser(null);
   };
 
@@ -75,12 +56,11 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
-        register,
         logout,
         isAuthenticated: !!user,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
